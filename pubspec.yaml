@@ -1,5 +1,5 @@
-name: flexpaypromoter
-description: "This is a promoter booking app for flexpay services"
+name: flexpaymerchandiser
+description: "This is a merchandiser app for flexpay services"
 
 publish_to: 'none'
 
@@ -22,43 +22,45 @@ dependencies:
   percent_indicator: ^4.2.2
   session_manager: ^0.0.4
   shared_preferences: ^2.0.15
-
+  video_player: ^2.5.1
+  flutter_swiper_view: ^1.1.8
+  swipe_deck: ^1.0.2
+  dio: ^5.7.0
+  dio_adapter: ^2.1.2
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^5.0.0
-  flutter_launcher_icons: "^0.14.2"
-
-
+  flutter_launcher_icons: ^0.14.2
+  mockito: ^5.4.0
+  integration_test:
+    sdk: flutter
+  mocktail: ^1.0.4
 
 flutter_launcher_icons:
-  android: "launcher_icon"
-  ios: true
-  image_path: "assets/icon/flexpayicon.jpeg"
-  min_sdk_android: 21 # android min sdk min:16, default 21
-  web:
-    generate: true
-    image_path: "assets/icon/flexpayicon.jpeg"
-    background_color: "#hexcode"
-    theme_color: "#hexcode"
-  windows:
-    generate: true
-    image_path: "assets/icon/flexpayicon.jpeg"
-    icon_size: 48 # min:48, max:256, default: 48
-  macos:
-    generate: true
-    image_path: "assets/icon/flexpayicon.jpeg"
+  android: true
+  image_path: "assets/icon/flexpaylogo.png"
 
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Montserrat
+      fonts:
+        - asset: assets/fonts/Montserrat/Montserrat-Medium.ttf
+        - asset: assets/fonts/Montserrat/Montserrat-Bold.ttf
+        - asset: assets/fonts/Montserrat/Montserrat-Regular.ttf
+          weight: 700
 
   assets:
-    - assets/images/
-    - assets/images/dashboard_images/
-    - assets/images/splash_images/
-    - assets/logo/
-    - assets/icon/
-
-
-
+    - assets/logos/logo.png
+    - assets/images/login.webm
+    - assets/images/onboarding.png
+    - assets/images/otpverification.webm
+    - assets/images/happyafricanlogin.png
+    - assets/icon/userprofile.png
+    - assets/images/dashboardimages/Naivas.png
+    - assets/images/dashboardimages/Quickmart.png
+    - assets/images/dashboardimages/Moko.png
+    - assets/images/dashboardimages/Hotpoint.png
+    - assets/images/dashboardimages/Car-and-General.png

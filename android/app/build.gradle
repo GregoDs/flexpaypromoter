@@ -4,6 +4,7 @@ plugins {
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id "dev.flutter.flutter-gradle-plugin"
 }
+
 def keystoreProperties = new Properties()
 def keystorePropertiesFile = rootProject.file('key.properties')
 if (keystorePropertiesFile.exists()) {
@@ -11,7 +12,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.example.flexpaypromoter"
+    namespace = "com.example.flexpaymerchandiser"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -25,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.flexpaypromoter"
+        applicationId = "com.example.flexpaymerchandiser"
         minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -33,7 +34,7 @@ android {
         multiDexEnabled true
     }
 
-      signingConfigs {
+    signingConfigs {
         release {
             keyAlias = keystoreProperties['keyAlias']
             keyPassword = keystoreProperties['keyPassword']
@@ -41,13 +42,12 @@ android {
             storePassword = keystoreProperties['storePassword']
         }
     }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now,
-            // so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
-            signingConfig = signingConfigs.release
+            shrinkResources false // Disable resource shrinking to ensure no assets are removed
+            minifyEnabled false // Disable code shrinking for the release build
+            signingConfig = signingConfigs.release // Use release signing configuration
         }
     }
 }

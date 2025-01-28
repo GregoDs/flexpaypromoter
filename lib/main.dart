@@ -1,118 +1,48 @@
-
-import 'dart:async';
-
-import 'package:flexpaypromoter/src/features/authentication/controllers/theme_controller.dart';
-import 'package:flexpaypromoter/src/features/authentication/controllers/user_controller.dart';
-import 'package:flexpaypromoter/src/features/authentication/screens/bookings_screen/bookings.dart';
-import 'package:flexpaypromoter/src/features/authentication/screens/home_screen/home.dart';
-import 'package:flexpaypromoter/src/features/authentication/screens/login/login_screen.dart';
-import 'package:flexpaypromoter/src/utils/theme/theme.dart';
+import 'package:flexpaymerchandiser/features/screens/intropage.dart';
+import 'package:flexpaymerchandiser/features/screens/loginscreen.dart';
+import 'package:flexpaymerchandiser/features/screens/splashscreen.dart';
+import 'package:flexpaymerchandiser/util/device/device_utility.dart';
+import 'package:flexpaymerchandiser/util/theme/theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 void main() {
-  // Initialize the controllers here
-  Get.put(UserController());
-  Get.put(ThemeController());
-
-  runApp(const App());
+  runApp(const FlexMerchandiserApp());
 }
 
-class App extends StatelessWidget {
-  const App({super.key});
+class FlexMerchandiserApp extends StatelessWidget {
+  const FlexMerchandiserApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return GetMaterialApp(
-      theme: TAppTheme.lightTheme,
-      darkTheme: TAppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      initialRoute: '/splash', // Set initial route
-      getPages: [
-        GetPage(name: '/splash', page: () => const SplashScreen()),
-        GetPage(name: '/home', page: () => const HomeScreen()),
-        GetPage(name: '/bookings', page: () => const Bookings()),
-        GetPage(name: '/login', page: () => const LoginScreen()),
-        // Add other routes here as needed
-      ],
-    );
-  }
-}
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return OrientationBuilder(
+          builder: (context, orientation) {
+            DeviceUtil.init(context); // Initialize DeviceUtil for screen utilities
 
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+            // Determine the screen width and height
+            double screenWidth = constraints.maxWidth;
+            double screenHeight = constraints.maxHeight;
 
-  @override
-  _SplashScreenState createState() => _SplashScreenState();
-}
+            // Log screen dimensions for debugging
+            debugPrint("Screen Width: $screenWidth, Screen Height: $screenHeight");
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _animation;
-  Timer? _sessionTimer;
-
-
-@override
-void initState() {
-  super.initState();
-  
-  // Set up the AnimationController
-  _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(seconds: 6),
-  );
-
-  _animation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
-
-  // Start the animation
-  _controller.forward();
-
-  // Check session and navigate after the animation completes
-  _controller.addStatusListener((status) async {
-    if (status == AnimationStatus.completed) {
-      await _checkSession();
-    }
-  });
-}
-
-Future<void> _checkSession() async {
-  bool isLoggedIn = Get.find<UserController>().isLoggedIn();
-
-  if (isLoggedIn) {
-    Get.offNamed('/home');
-  } else {
-    Get.offNamed('/login');
-  }
-}
-
-
-
-  void _handleSessionTimeout() {
-    // Logic to handle session expiration
-    Get.offNamed('/login'); // Use Get for navigation
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    _sessionTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF337687),
-      body: Center(
-        child: FadeTransition(
-          opacity: _animation,
-          child: Image.asset(
-            'assets/logo/logo.png',
-            width: 150,
-            height: 150,
-          ),
-        ),
-      ),
+            return GetMaterialApp(
+              debugShowCheckedModeBanner: false, // Remove debug banner
+              themeMode: ThemeMode.system,
+              theme: TAppTheme.lightTheme,
+              darkTheme: TAppTheme.darkTheme,
+              initialRoute: '/',
+              getPages: [
+                GetPage(name: '/', page: () => const SplashScreen()),
+                GetPage(name: '/onboarding', page: () => OnboardingScreen()),
+                GetPage(name: '/login', page: () => LoginScreen()),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 }
