@@ -90,26 +90,27 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
     }
   }
 
-
-  
-void _filterCustomers() {
-  final query = _searchController.text.trim();
-  if (query.isEmpty) {
-    setState(() {
-      filteredDetails = outletDetails;
-    });
-  } else {
-    setState(() {
-      // Apply search on the formatted "07" phone numbers
-      filteredDetails = outletDetails.where((customer) {
-        final phone = customer["phone"] ?? "";
-        final status = customer["status"].toLowerCase() ?? "";
-        final name = customer["customer_name"].toLowerCase() ?? "";  // Fixed here
-        return phone.contains(query) || status.contains(query) || name.contains(query);
-      }).toList();
-    });
+  void _filterCustomers() {
+    final query = _searchController.text.trim();
+    if (query.isEmpty) {
+      setState(() {
+        filteredDetails = outletDetails;
+      });
+    } else {
+      setState(() {
+        // Apply search on the formatted "07" phone numbers
+        filteredDetails = outletDetails.where((customer) {
+          final phone = customer["phone"] ?? "";
+          final status = customer["status"].toLowerCase() ?? "";
+          final name =
+              customer["customer_name"].toLowerCase() ?? ""; // Fixed here
+          return phone.contains(query) ||
+              status.contains(query) ||
+              name.contains(query);
+        }).toList();
+      });
+    }
   }
-}
 
   String _formatPhoneNumber(String phone) {
     if (phone.startsWith('254') && phone.length == 12) {
@@ -163,18 +164,14 @@ void _filterCustomers() {
     }
   }
 
-Future<void> _makePhoneCall(String phoneNumber) async {
-  final Uri url = Uri.parse('tel:$phoneNumber');
-  if (await canLaunchUrl(url)) {
-    await launchUrl(url);
-  } else {
-    Get.snackbar("Error", "Could not launch dialer");
+  Future<void> _makePhoneCall(String phoneNumber) async {
+    final Uri url = Uri.parse('tel:$phoneNumber');
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    } else {
+      Get.snackbar("Error", "Could not launch dialer");
+    }
   }
-}
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -360,16 +357,16 @@ Future<void> _makePhoneCall(String phoneNumber) async {
               SizedBox(height: screenWidth * 0.02),
 
               // Phone Number Below Dropdown
-             GestureDetector(
-              onTap:() =>  _makePhoneCall(customer["phone"]),
-              child: Text(
-                customer["phone"] ?? "N/A",
-                style: GoogleFonts.montserrat(
-                  fontSize: screenWidth * 0.04,
-                  color: Colors.blue,
+              GestureDetector(
+                onTap: () => _makePhoneCall(customer["phone"]),
+                child: Text(
+                  customer["phone"] ?? "N/A",
+                  style: GoogleFonts.montserrat(
+                    fontSize: screenWidth * 0.04,
+                    color: Colors.blue,
+                  ),
                 ),
-              ),
-             )
+              )
             ],
           ),
         ],
