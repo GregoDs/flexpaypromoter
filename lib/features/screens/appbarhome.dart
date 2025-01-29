@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-AppBar appBarHome(BuildContext context, int outletsCount) {
+AppBar appBarHome(BuildContext context, int outletsCount, List<dynamic> outlets) {
   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
   // Set colors based on the theme
@@ -15,12 +15,30 @@ AppBar appBarHome(BuildContext context, int outletsCount) {
   final screenWidth = MediaQuery.of(context).size.width;
   final screenHeight = MediaQuery.of(context).size.height;
 
+  // Search controller
+  TextEditingController searchController = TextEditingController();
+
+  // Filtered outlets based on search input
+  List<dynamic> filteredOutlets = outlets;
+
+  // Function to update filtered outlets based on search query
+  void updateSearchResults(String query) {
+    if (query.isEmpty) {
+      filteredOutlets = outlets; // Reset to all outlets if search is empty
+    } else {
+      filteredOutlets = outlets.where((outlet) {
+        return outlet['outlet_name']
+            .toLowerCase()
+            .contains(query.toLowerCase());
+      }).toList();
+    }
+  }
+
   return AppBar(
     backgroundColor: backgroundColor,
     elevation: 0,
     automaticallyImplyLeading: false,
-    toolbarHeight:
-        screenHeight * 0.1, // Dynamically set height (40% of screen height)
+    toolbarHeight: screenHeight * 0.1, // Dynamically set height (40% of screen height)
     flexibleSpace: Padding(
       padding: EdgeInsets.symmetric(
         vertical: screenHeight * 0.08, // 5% of screen height
@@ -110,10 +128,14 @@ AppBar appBarHome(BuildContext context, int outletsCount) {
                   child: Row(
                     children: [
                       SizedBox(width: screenWidth * 0.03),
-                      Icon(Icons.search, color: iconColor),
+                      Icon(Icons.grid_view, color: iconColor),
                       SizedBox(width: screenWidth * 0.02),
                       Expanded(
                         child: TextField(
+                          controller: searchController,
+                          onChanged: (query) {
+                            updateSearchResults(query);
+                          },
                           decoration: InputDecoration(
                             border: InputBorder.none,
                             hintText: "Spotlight Search",

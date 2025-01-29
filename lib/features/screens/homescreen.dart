@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       backgroundColor: widget.isDarkModeOn ? Colors.black : Colors.white,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(440.0),
-        child: appBarHome(context, outletsCount), // Assuming appBarHome is defined
+        child: appBarHome(context, outletsCount, outlets) // Assuming appBarHome is defined
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())

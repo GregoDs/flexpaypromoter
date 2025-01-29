@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:url_launcher/url_launcher.dart';
 
 class OutletDetailsPage extends StatefulWidget {
   final String outletId;
@@ -18,7 +19,17 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
   List<dynamic> filteredDetails = [];
   bool isLoading = true;
   final TextEditingController _searchController = TextEditingController();
-  final List<String> statusOptions = ["NOT CALLED", "NOT ANSWERED", "ANSWERED", "RESTRICTED", "UNREACHABLE", "NOT EXIST", "BUSY", "NOT IN SERVICE"];
+  final List<String> statusOptions = [
+    "NOT CALLED",
+    "NOT ANSWERED",
+    "ANSWERED",
+    "CALL BACK LATER",
+    "RESTRICTED",
+    "UNREACHABLE",
+    "NOT EXIST",
+    "BUSY",
+    "NOT IN SERVICE"
+  ];
 
   @override
   void initState() {
@@ -56,8 +67,10 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
             outletDetails = (data["data"]["data"] ?? []).map((customer) {
               // Format the phone numbers on fetch
               customer["phone"] = _formatPhoneNumber(customer["phone"] ?? "");
-              customer["status"] = customer["customer_followup"]?["status"] ?? "NOT CALLED"; // Extract status or default to "NOT CALLED" since it is nested further and not directly
-              customer["flexsave"] = customer["is_flexsave_customer"] == 1 ? "Yes" : "No";
+              customer["status"] = customer["customer_followup"]?["status"] ??
+                  "NOT CALLED"; // Extract status or default to "NOT CALLED" since it is nested further and not directly
+              customer["flexsave"] =
+                  customer["is_flexsave_customer"] == 1 ? "Yes" : "No";
               return customer;
             }).toList();
             filteredDetails = outletDetails;
@@ -77,22 +90,26 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
     }
   }
 
-  void _filterCustomers() {
-    final query = _searchController.text.trim();
-    if (query.isEmpty) {
-      setState(() {
-        filteredDetails = outletDetails;
-      });
-    } else {
-      setState(() {
-        // Apply search on the formatted "07" phone numbers
-        filteredDetails = outletDetails.where((customer) {
-          final phone = customer["phone"] ?? "";
-          return phone.contains(query);
-        }).toList();
-      });
-    }
+
+  
+void _filterCustomers() {
+  final query = _searchController.text.trim();
+  if (query.isEmpty) {
+    setState(() {
+      filteredDetails = outletDetails;
+    });
+  } else {
+    setState(() {
+      // Apply search on the formatted "07" phone numbers
+      filteredDetails = outletDetails.where((customer) {
+        final phone = customer["phone"] ?? "";
+        final status = customer["status"].toLowerCase() ?? "";
+        final name = customer["customer_name"].toLowerCase() ?? "";  // Fixed here
+        return phone.contains(query) || status.contains(query) || name.contains(query);
+      }).toList();
+    });
   }
+}
 
   String _formatPhoneNumber(String phone) {
     if (phone.startsWith('254') && phone.length == 12) {
@@ -102,42 +119,62 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
   }
 
   Future<void> updateCustomerStatus(int customerId, String status) async {
-  const String updateUrl = "https://www.flexpay.co.ke/users/api/merchandizer/customer-followup";
+    const String updateUrl =
+        "https://www.flexpay.co.ke/users/api/merchandizer/customer-followup";
 
-  try {
-    final Map<String, dynamic> requestBody = {
-      "user_id": customerId, // Update only this customer
-      "status": status, // New status to update
-    };
+    try {
+      final Map<String, dynamic> requestBody = {
+        "user_id": customerId, // Update only this customer
+        "status": status, // New status to update
+      };
 
-    // Log the request body
-    print("Sending update request: $requestBody");
+      // Log the request body
+      print("Sending update request: $requestBody");
 
-    final updateResponse = await http.post(
-      Uri.parse(updateUrl),
-      headers: {"Content-Type": "application/json",
-      "Authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmZsZXhwYXkuY28ua2VcL3VzZXJzXC9hcGlcL2xvZ2luIiwiaWF0IjoxNzM3OTk2NTE4LCJleHAiOjYwMDAxNzM3OTk2NDU4LCJuYmYiOjE3Mzc5OTY1MTgsImp0aSI6IjlhWFhuOFZUWTc1Z3FvamEiLCJzdWIiOjIxMTQyMiwicHJ2IjoiODdlMGFmMWVmOWZkMTU4MTJmZGVjOTcxNTNhMTRlMGIwNDc1NDZhYSJ9.RCMsQxDPdowoKt3BPSiXuY25XUmwpX5_3Nnwcq2I8fQ"},
-      body: json.encode(requestBody),
-    );
+      final updateResponse = await http.post(
+        Uri.parse(updateUrl),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization":
+              "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwczpcL1wvd3d3LmZsZXhwYXkuY28ua2VcL3VzZXJzXC9hcGlcL2xvZ2luIiwiaWF0IjoxNzM3OTk2NTE4LCJleHAiOjYwMDAxNzM3OTk2NDU4LCJuYmYiOjE3Mzc5OTY1MTgsImp0aSI6IjlhWFhuOFZUWTc1Z3FvamEiLCJzdWIiOjIxMTQyMiwicHJ2IjoiODdlMGFmMWVmOWZkMTU4MTJmZGVjOTcxNTNhMTRlMGIwNDc1NDZhYSJ9.RCMsQxDPdowoKt3BPSiXuY25XUmwpX5_3Nnwcq2I8fQ"
+        },
+        body: json.encode(requestBody),
+      );
 
-    // Log response details
-    print("Response status: ${updateResponse.statusCode}");
-    print("Response body: ${updateResponse.body}");
+      // Log response details
+      print("Response status: ${updateResponse.statusCode}");
+      print("Response body: ${updateResponse.body}");
 
-    if (updateResponse.statusCode == 200) {
-      final updateData = json.decode(updateResponse.body);
-      if (updateData["success"] == true) {
-        print("Customer ID $customerId status updated successfully in backend.");
+      if (updateResponse.statusCode == 200) {
+        final updateData = json.decode(updateResponse.body);
+        if (updateData["success"] == true) {
+          print(
+              "Customer ID $customerId status updated successfully in backend.");
+        } else {
+          print(
+              "Backend error for Customer ID $customerId: ${updateData["message"]}");
+        }
       } else {
-        print("Backend error for Customer ID $customerId: ${updateData["message"]}");
+        print(
+            "Failed to update status for Customer ID $customerId. Status code: ${updateResponse.statusCode}");
       }
-    } else {
-      print("Failed to update status for Customer ID $customerId. Status code: ${updateResponse.statusCode}");
+    } catch (e) {
+      print("Error updating status for Customer ID $customerId: $e");
     }
-  } catch (e) {
-    print("Error updating status for Customer ID $customerId: $e");
+  }
+
+Future<void> _makePhoneCall(String phoneNumber) async {
+  final Uri url = Uri.parse('tel:$phoneNumber');
+  if (await canLaunchUrl(url)) {
+    await launchUrl(url);
+  } else {
+    Get.snackbar("Error", "Could not launch dialer");
   }
 }
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +248,6 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
                         ),
                         SizedBox(height: screenHeight * 0.02),
                         _buildSearchBar(screenWidth),
-                       
                         SizedBox(height: screenHeight * 0.01),
                         Expanded(
                           child: ListView.builder(
@@ -266,116 +302,123 @@ class _OutletDetailsPageState extends State<OutletDetailsPage> {
     );
   }
 
- Widget _buildCustomerRow(Map<String, dynamic> customer, double screenWidth) {
-  return Container(
-    margin: EdgeInsets.symmetric(vertical: screenWidth * 0.02),
-    padding: EdgeInsets.all(screenWidth * 0.04),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
-    ),
-    child: Row(
-      children: [
-        // Left Section - Customer Info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                customer["customer_name"] ?? "N/A",
-                style: GoogleFonts.montserrat(
-                  fontSize: screenWidth * 0.045,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+  Widget _buildCustomerRow(Map<String, dynamic> customer, double screenWidth) {
+    return Container(
+      margin: EdgeInsets.symmetric(vertical: screenWidth * 0.02),
+      padding: EdgeInsets.all(screenWidth * 0.04),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          // Left Section - Customer Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  customer["customer_name"] ?? "N/A",
+                  style: GoogleFonts.montserrat(
+                    fontSize: screenWidth * 0.045,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black,
+                  ),
                 ),
-              ),
-              SizedBox(height: screenWidth * 0.01),
-              
-              // Flexsave Status with Color Change
-              Text(
-                customer["flexsave"] == "Yes" ? "Yes" : "No",
+                SizedBox(height: screenWidth * 0.01),
+
+                // Flexsave Status with Color Change
+                Text(
+                  customer["flexsave"] == "Yes" ? "Yes" : "No",
+                  style: GoogleFonts.montserrat(
+                    fontSize: screenWidth * 0.04,
+                    fontWeight: FontWeight.bold,
+                    color: customer["flexsave"] == "Yes"
+                        ? Colors.green
+                        : Colors.red,
+                  ),
+                ),
+
+                SizedBox(height: screenWidth * 0.005),
+                Text(
+                  customer["date_created"] ?? "N/A",
+                  style: GoogleFonts.montserrat(
+                    fontSize: screenWidth * 0.035,
+                    color: Colors.black54,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Right Section - Status Dropdown + Phone Number
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _buildStatusDropdown(customer, screenWidth),
+
+              SizedBox(height: screenWidth * 0.02),
+
+              // Phone Number Below Dropdown
+             GestureDetector(
+              onTap:() =>  _makePhoneCall(customer["phone"]),
+              child: Text(
+                customer["phone"] ?? "N/A",
                 style: GoogleFonts.montserrat(
                   fontSize: screenWidth * 0.04,
-                  fontWeight: FontWeight.bold,
-                  color: customer["flexsave"] == "Yes" ? Colors.green : Colors.red,
+                  color: Colors.blue,
                 ),
               ),
-              
-              SizedBox(height: screenWidth * 0.005),
-              Text(
-                customer["date_created"] ?? "N/A",
-                style: GoogleFonts.montserrat(
-                  fontSize: screenWidth * 0.035,
-                  color: Colors.black54,
-                ),
-              ),
+             )
             ],
           ),
-        ),
+        ],
+      ),
+    );
+  }
 
-        // Right Section - Status Dropdown + Phone Number
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _buildStatusDropdown(customer, screenWidth),
-
-            SizedBox(height: screenWidth * 0.02),
-
-            // Phone Number Below Dropdown
-            Text(
-              customer["phone"] ?? "N/A",
-              style: GoogleFonts.montserrat(
-                fontSize: screenWidth * 0.04,
-                color: Colors.black87,
-              ),
+  Widget _buildStatusDropdown(
+      Map<String, dynamic> customer, double screenWidth) {
+    return DropdownButton<String>(
+      value: statusOptions.contains(customer["status"])
+          ? customer["status"]
+          : statusOptions[0],
+      items: statusOptions.map((String status) {
+        return DropdownMenuItem<String>(
+          value: status,
+          child: Text(
+            status,
+            style: GoogleFonts.montserrat(
+              fontSize: screenWidth * 0.035,
             ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
-
-Widget _buildStatusDropdown(Map<String, dynamic> customer, double screenWidth) {
-  return DropdownButton<String>(
-    value: statusOptions.contains(customer["status"]) ? customer["status"] : statusOptions[0],
-    items: statusOptions.map((String status) {
-      return DropdownMenuItem<String>(
-        value: status,
-        child: Text(
-          status,
-          style: GoogleFonts.montserrat(
-            fontSize: screenWidth * 0.035,
           ),
-        ),
-      );
-    }).toList(),
-    onChanged: (newStatus) async {
-      if (newStatus != null) {
-        setState(() {
-          customer["status"] = newStatus; // Update UI immediately
-        });
+        );
+      }).toList(),
+      onChanged: (newStatus) async {
+        if (newStatus != null) {
+          setState(() {
+            customer["status"] = newStatus; // Update UI immediately
+          });
 
-        try {
-          // Call API for the specific customer
-          await updateCustomerStatus(customer["id"], newStatus);
+          try {
+            // Call API for the specific customer
+            await updateCustomerStatus(customer["id"], newStatus);
 
-          // Show success feedback
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Status updated to $newStatus successfully!")),
-          );
-        } catch (e) {
-          // Handle failure feedback
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text("Failed to update sZXtatus: $e")),
-          );
+            // Show success feedback
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content: Text("Status updated to $newStatus successfully!")),
+            );
+          } catch (e) {
+            // Handle failure feedback
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text("Failed to update sZXtatus: $e")),
+            );
+          }
         }
-      }
-    },
-  );
-}
-
+      },
+    );
+  }
 
   Widget _buildHeaderCell(String text, double screenWidth) {
     return Expanded(
